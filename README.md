@@ -43,6 +43,8 @@ De nouveaux contrôles et domaines seront ajoutés progressivement.
 
 Basé sur le [CIS Ubuntu Linux Benchmark](https://www.cisecurity.org/benchmark/ubuntu_linux), la référence mondiale pour le durcissement des serveurs Linux.
 
+Merci [Stephane Robert](https://blog.stephane-robert.info/docs/securiser/durcissement/cis-benchmarks/)
+
 ---
 
 ## 📄 Licence
