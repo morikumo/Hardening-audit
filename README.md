@@ -1,6 +1,5 @@
-# hardening-audit
+# Hardening-audit
 
-![Audit CIS](https://github.com/morikumo/hardening-audit/actions/workflows/audit.yml/badge.svg)
 ![CIS Benchmark](https://img.shields.io/badge/CIS-Ubuntu%20Benchmark-blue)
 ![Bash](https://img.shields.io/badge/Bash-Script-green)
 
