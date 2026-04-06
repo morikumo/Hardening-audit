@@ -137,6 +137,29 @@ check_warn "1.10" "needrestart est installé (détecte services à redémarrer)"
   "command -v needrestart" \
   "Installer : apt-get install needrestart"
 
+# ── 2. Système de fichiers ─────────────────────────────────
+echo -e "\n${BOLD}[2] Système de fichiers${NC}"
+
+check "2.1" "nodev sur /tmp" "Filesystem" \
+  "mount | grep ' /tmp ' | grep -q nodev" \
+  "Ajouter l'option nodev à /tmp dans /etc/fstab"
+
+check "2.2" "nosuid sur /tmp" "Filesystem" \
+  "mount | grep ' /tmp ' | grep -q nosuid" \
+  "Ajouter l'option nosuid à /tmp dans /etc/fstab"
+
+check "2.3" "noexec sur /tmp" "Filesystem" \
+  "mount | grep ' /tmp ' | grep -q noexec" \
+  "Ajouter l'option noexec à /tmp dans /etc/fstab"
+
+check_warn "2.4" "/var est une partition séparée" "Filesystem" \
+  "mount | grep -q ' /var '" \
+  "Monter /var sur une partition dédiée"
+
+check_warn "2.5" "/home est une partition séparée" "Filesystem" \
+  "mount | grep -q ' /home '" \
+  "Monter /home sur une partition dédiée"
+
 
 # ══════════════════════════════════════════════════════════
 #  CALCUL DU SCORE
