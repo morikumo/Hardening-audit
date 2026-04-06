@@ -22,14 +22,16 @@ chmod +x hardening-audit.sh
 
 ---
 
-## 📊 Ce que ça vérifie
+## 📊 Domaines audités
 
-Pour l'instant, le script couvre les **mises à jour système** (section 1 du CIS Benchmark Ubuntu).
-De nouveaux contrôles et domaines seront ajoutés progressivement.
+| # | Domaine | Contrôles |
+|---|---|---|
+| 1 | **Mises à jour système** | apt, unattended-upgrades, etc... |
+| 2 | **Système de fichiers** | /tmp nodev/nosuid/noexec, partitions séparées, etc... |
 
 ---
 
-## 📈 Interprétation du score
+## 📈 Interprétation du score (pour le moment)
 
 | Score | Niveau |
 |---|---|
@@ -42,6 +44,8 @@ De nouveaux contrôles et domaines seront ajoutés progressivement.
 ## 📚 Référence
 
 Basé sur le [CIS Ubuntu Linux Benchmark](https://www.cisecurity.org/benchmark/ubuntu_linux), la référence mondiale pour le durcissement des serveurs Linux.
+
+Mais on va aussi ce concentrer sur la version open-source [Open-Scap]()
 
 Merci [Stephane Robert](https://blog.stephane-robert.info/docs/securiser/durcissement/cis-benchmarks/)
 

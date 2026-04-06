@@ -160,6 +160,73 @@ check_warn "2.5" "/home est une partition séparée" "Filesystem" \
   "mount | grep -q ' /home '" \
   "Monter /home sur une partition dédiée"
 
+check_warn "2.6" "/var/log est une partition séparée" "Filesystem" \
+  "mount | grep -q ' /var/log '" \
+  "Monter /var/log sur une partition dédiée"
+
+check_warn "2.7" "/var/log/audit est une partition séparée" "Filesystem" \
+  "mount | grep -q ' /var/log/audit '" \
+  "Monter /var/log/audit sur une partition dédiée"
+
+check "2.8" "nodev sur /home" "Filesystem" \
+  "mount | grep ' /home ' | grep -q nodev" \
+  "Ajouter l'option nodev à /home dans /etc/fstab"
+
+check "2.9" "nodev sur /dev/shm" "Filesystem" \
+  "mount | grep ' /dev/shm ' | grep -q nodev" \
+  "Ajouter l'option nodev à /dev/shm dans /etc/fstab"
+
+check "2.10" "nosuid sur /dev/shm" "Filesystem" \
+  "mount | grep ' /dev/shm ' | grep -q nosuid" \
+  "Ajouter l'option nosuid à /dev/shm dans /etc/fstab"
+
+check "2.11" "noexec sur /dev/shm" "Filesystem" \
+  "mount | grep ' /dev/shm ' | grep -q noexec" \
+  "Ajouter l'option noexec à /dev/shm dans /etc/fstab"
+
+check_warn "2.12" "Le module cramfs est désactivé" "Filesystem" \
+  "! lsmod 2>/dev/null | grep -q cramfs && grep -rq 'install cramfs /bin/false' /etc/modprobe.d/ 2>/dev/null" \
+  "Ajouter dans /etc/modprobe.d/blacklist.conf : install cramfs /bin/false"
+
+check_warn "2.13" "Le module freevxfs est désactivé" "Filesystem" \
+  "! lsmod 2>/dev/null | grep -q freevxfs && grep -rq 'install freevxfs /bin/false' /etc/modprobe.d/ 2>/dev/null" \
+  "Ajouter dans /etc/modprobe.d/blacklist.conf : install freevxfs /bin/false"
+
+check_warn "2.14" "Le module jffs2 est désactivé" "Filesystem" \
+  "! lsmod 2>/dev/null | grep -q jffs2 && grep -rq 'install jffs2 /bin/false' /etc/modprobe.d/ 2>/dev/null" \
+  "Ajouter dans /etc/modprobe.d/blacklist.conf : install jffs2 /bin/false"
+
+check_warn "2.15" "Le module hfs est désactivé" "Filesystem" \
+  "! lsmod 2>/dev/null | grep -q '^hfs ' && grep -rq 'install hfs /bin/false' /etc/modprobe.d/ 2>/dev/null" \
+  "Ajouter dans /etc/modprobe.d/blacklist.conf : install hfs /bin/false"
+
+check_warn "2.16" "Le module hfsplus est désactivé" "Filesystem" \
+  "! lsmod 2>/dev/null | grep -q hfsplus && grep -rq 'install hfsplus /bin/false' /etc/modprobe.d/ 2>/dev/null" \
+  "Ajouter dans /etc/modprobe.d/blacklist.conf : install hfsplus /bin/false"
+
+check_warn "2.17" "Le module udf est désactivé" "Filesystem" \
+  "! lsmod 2>/dev/null | grep -q '^udf ' && grep -rq 'install udf /bin/false' /etc/modprobe.d/ 2>/dev/null" \
+  "Ajouter dans /etc/modprobe.d/blacklist.conf : install udf /bin/false"
+
+check "2.18" "Sticky bit activé sur les répertoires world-writable" "Filesystem" \
+  "[ \$(find / -xdev -type d -perm -0002 ! -perm -1000 2>/dev/null | wc -l) -eq 0 ]" \
+  "Corriger : find / -xdev -type d -perm -0002 ! -perm -1000 -exec chmod +t {} +"
+
+check_warn "2.19" "Pas de fichiers sans propriétaire" "Filesystem" \
+  "[ \$(find / -xdev -nouser 2>/dev/null | wc -l) -eq 0 ]" \
+  "Identifier : find / -xdev -nouser et assigner un propriétaire"
+
+check_warn "2.20" "Pas de fichiers sans groupe" "Filesystem" \
+  "[ \$(find / -xdev -nogroup 2>/dev/null | wc -l) -eq 0 ]" \
+  "Identifier : find / -xdev -nogroup et assigner un groupe"
+
+check "2.21" "Pas de fichiers SUID non autorisés" "Filesystem" \
+  "[ \$(find / -xdev -type f -perm -4000 2>/dev/null | wc -l) -le 10 ]" \
+  "Auditer : find / -xdev -type f -perm -4000 et retirer le bit SUID si inutile"
+
+check "2.22" "Pas de fichiers SGID non autorisés" "Filesystem" \
+  "[ \$(find / -xdev -type f -perm -2000 2>/dev/null | wc -l) -le 10 ]" \
+  "Auditer : find / -xdev -type f -perm -2000 et retirer le bit SGID si inutile"
 
 # ══════════════════════════════════════════════════════════
 #  CALCUL DU SCORE
@@ -214,7 +281,6 @@ generate_json() {
   echo "  ]"
   echo "}"
 }
-
 
 # ── Écriture du rapport ────────────────────────────────────
 echo -e "\n${BOLD}Génération du rapport ${FORMAT^^}...${NC}"
