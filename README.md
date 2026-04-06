@@ -1,6 +1,5 @@
-# hardening-audit
+# Hardening-audit
 
-![Audit CIS](https://github.com/morikumo/hardening-audit/actions/workflows/audit.yml/badge.svg)
 ![CIS Benchmark](https://img.shields.io/badge/CIS-Ubuntu%20Benchmark-blue)
 ![Bash](https://img.shields.io/badge/Bash-Script-green)
 
@@ -43,6 +42,8 @@ De nouveaux contrôles et domaines seront ajoutés progressivement.
 ## 📚 Référence
 
 Basé sur le [CIS Ubuntu Linux Benchmark](https://www.cisecurity.org/benchmark/ubuntu_linux), la référence mondiale pour le durcissement des serveurs Linux.
+
+Merci [Stephane Robert](https://blog.stephane-robert.info/docs/securiser/durcissement/cis-benchmarks/)
 
 ---
 
