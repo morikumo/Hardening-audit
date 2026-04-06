@@ -1,6 +1,6 @@
 # Hardening-audit
 
-![CIS Benchmark](https://img.shields.io/badge/CIS-Ubuntu%20Benchmark-blue)
+![CIS Benchmark](https://img.shields.io/badge/CIS%20Benchmark-blue)
 ![Bash](https://img.shields.io/badge/Bash-Script-green)
 
 Votre serveur est-il vraiment sécurisé ? Conforme aux bonnes pratiques ?
