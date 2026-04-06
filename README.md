@@ -45,7 +45,7 @@ chmod +x hardening-audit.sh
 
 Basé sur le [CIS Ubuntu Linux Benchmark](https://www.cisecurity.org/benchmark/ubuntu_linux), la référence mondiale pour le durcissement des serveurs Linux.
 
-Mais on va aussi ce concentrer sur la version open-source [Open-Scap]()
+Mais on va aussi ce concentrer sur la version open-source [Open-Scap](https://static.open-scap.org/openscap-1.3/oscap_user_manual.html)
 
 Merci [Stephane Robert](https://blog.stephane-robert.info/docs/securiser/durcissement/cis-benchmarks/)
 
