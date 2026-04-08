@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # ============================================================
 #  hardening-audit.sh — Audit CIS Benchmark Ubuntu/Debian
-#  Usage : ./hardening-audit.sh [--format json] [--output <fichier>]
+#  Usage : ./hardening-audit.sh [--format json|html] [--output <fichier>]
 #  Exemple : ./hardening-audit.sh --format json --output rapport.json
+#            ./hardening-audit.sh --format html --output rapport.html
 # ============================================================
 
 set -uo pipefail
@@ -12,8 +13,7 @@ RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'
 BLUE='\033[0;34m'; BOLD='\033[1m'; NC='\033[0m'
 
 # ── Valeurs par défaut ─────────────────────────────────────
-#FORMAT="html"
-FORMAT="json"
+FORMAT="html"
 OUTPUT=""
 TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
 HOSTNAME=$(hostname)
@@ -37,8 +37,8 @@ done
 [[ -z "$OUTPUT" ]] && OUTPUT="audit-report.${FORMAT}"
 
 # Validation du format
-if [[ "$FORMAT" != "json" ]]; then
-  echo -e "${RED}Format invalide : '$FORMAT'. Utiliser 'json'.${NC}"
+if [[ "$FORMAT" != "html" && "$FORMAT" != "json" ]]; then
+  echo -e "${RED}Format invalide : '$FORMAT'. Utiliser 'json' ou 'html'.${NC}"
   exit 1
 fi
 
@@ -228,6 +228,37 @@ check "2.22" "Pas de fichiers SGID non autorisés" "Filesystem" \
   "[ \$(find / -xdev -type f -perm -2000 2>/dev/null | wc -l) -le 10 ]" \
   "Auditer : find / -xdev -type f -perm -2000 et retirer le bit SGID si inutile"
 
+# ── 3. Permissions fichiers critiques ─────────────────────
+echo -e "\n${BOLD}[3] Permissions fichiers critiques${NC}"
+
+check "3.1" "Permissions /etc/passwd : 644" "Permissions" \
+  "[ \$(stat -c %a /etc/passwd) = '644' ]" \
+  "Corriger : chmod 644 /etc/passwd"
+
+check "3.2" "Propriétaire /etc/passwd : root" "Permissions" \
+  "[ \$(stat -c %U /etc/passwd) = 'root' ]" \
+  "Corriger : chown root:root /etc/passwd"
+
+check "3.3" "Permissions /etc/shadow : 640 ou 000" "Permissions" \
+  "stat -c %a /etc/shadow | grep -qE '^(640|000|600)$'" \
+  "Corriger : chmod 640 /etc/shadow"
+
+check "3.4" "Propriétaire /etc/shadow : root" "Permissions" \
+  "[ \$(stat -c %U /etc/shadow) = 'root' ]" \
+  "Corriger : chown root:root /etc/shadow"
+
+check "3.5" "Permissions /etc/sudoers : 440" "Permissions" \
+  "[ \$(stat -c %a /etc/sudoers) = '440' ]" \
+  "Corriger : chmod 440 /etc/sudoers"
+
+check "3.6" "Permissions /etc/crontab : 600" "Permissions" \
+  "[ \$(stat -c %a /etc/crontab) = '600' ]" \
+  "Corriger : chmod 600 /etc/crontab"
+
+check "3.7" "Permissions /etc/ssh/sshd_config : 600" "Permissions" \
+  "[ \$(stat -c %a /etc/ssh/sshd_config 2>/dev/null) = '600' ]" \
+  "Corriger : chmod 600 /etc/ssh/sshd_config"
+
 # ══════════════════════════════════════════════════════════
 #  CALCUL DU SCORE
 # ══════════════════════════════════════════════════════════
@@ -282,11 +313,139 @@ generate_json() {
   echo "}"
 }
 
+generate_html() {
+  # Couleur du score
+  local color_score
+  if   [ "$SCORE" -ge 80 ]; then color_score="#22c55e"
+  elif [ "$SCORE" -ge 60 ]; then color_score="#f59e0b"
+  else                           color_score="#ef4444"
+  fi
+
+  cat <<HTML
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Audit CIS — $HOSTNAME</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0f172a; color: #e2e8f0; padding: 2rem; }
+    h1 { font-size: 1.8rem; color: #f8fafc; margin-bottom: 0.3rem; }
+    .subtitle { color: #94a3b8; font-size: 0.95rem; margin-bottom: 2rem; }
+    .meta { display: flex; gap: 2rem; flex-wrap: wrap; margin-bottom: 2rem; }
+    .meta-item { background: #1e293b; border-radius: 8px; padding: 1rem 1.5rem; }
+    .meta-item .label { font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
+    .meta-item .value { font-size: 1.1rem; font-weight: 600; color: #f1f5f9; margin-top: 0.2rem; }
+    .score-card { background: #1e293b; border-radius: 12px; padding: 2rem; margin-bottom: 2rem; display: flex; align-items: center; gap: 2rem; }
+    .score-circle { width: 100px; height: 100px; border-radius: 50%; border: 6px solid ${color_score}; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .score-number { font-size: 2rem; font-weight: 700; color: ${color_score}; }
+    .score-details { display: flex; gap: 1.5rem; flex-wrap: wrap; }
+    .score-stat { text-align: center; }
+    .score-stat .num { font-size: 1.5rem; font-weight: 700; }
+    .score-stat .lbl { font-size: 0.8rem; color: #94a3b8; }
+    .pass-num { color: #22c55e; } .fail-num { color: #ef4444; } .warn-num { color: #f59e0b; }
+    table { width: 100%; border-collapse: collapse; background: #1e293b; border-radius: 12px; overflow: hidden; }
+    th { background: #0f172a; padding: 0.9rem 1rem; text-align: left; font-size: 0.8rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
+    td { padding: 0.85rem 1rem; border-top: 1px solid #0f172a; font-size: 0.9rem; vertical-align: top; }
+    tr:hover td { background: #263347; }
+    .badge { display: inline-block; padding: 0.2rem 0.7rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; }
+    .badge-PASS { background: #14532d; color: #86efac; }
+    .badge-FAIL { background: #450a0a; color: #fca5a5; }
+    .badge-WARN { background: #451a03; color: #fcd34d; }
+    .cat { background: #1e3a5f; color: #93c5fd; padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.75rem; }
+    .reco { color: #94a3b8; font-size: 0.82rem; margin-top: 0.3rem; font-style: italic; }
+    .filter-bar { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
+    .filter-btn { padding: 0.4rem 1rem; border-radius: 999px; border: none; cursor: pointer; font-size: 0.85rem; font-weight: 600; }
+    .filter-btn.active, .filter-btn:hover { opacity: 1; }
+    .filter-btn { opacity: 0.6; background: #1e293b; color: #e2e8f0; }
+    .filter-btn.f-all.active  { background: #334155; color: #f1f5f9; opacity: 1; }
+    .filter-btn.f-pass.active { background: #14532d; color: #86efac; opacity: 1; }
+    .filter-btn.f-fail.active { background: #450a0a; color: #fca5a5; opacity: 1; }
+    .filter-btn.f-warn.active { background: #451a03; color: #fcd34d; opacity: 1; }
+    footer { margin-top: 2rem; text-align: center; color: #475569; font-size: 0.8rem; }
+  </style>
+</head>
+<body>
+  <h1>🔒 Rapport d'audit basé sur le CIS Benchmark et Open-Scap </h1>
+  <p class="subtitle">Généré par hardening-audit.sh — Référence : CIS Ubuntu Linux Benchmark</p>
+
+  <div class="meta">
+    <div class="meta-item"><div class="label">Hôte</div><div class="value">$HOSTNAME</div></div>
+    <div class="meta-item"><div class="label">Système</div><div class="value">$OS</div></div>
+    <div class="meta-item"><div class="label">Date</div><div class="value">$TIMESTAMP</div></div>
+    <div class="meta-item"><div class="label">Contrôles</div><div class="value">$TOTAL vérifiés</div></div>
+  </div>
+
+  <div class="score-card">
+    <div class="score-circle"><span class="score-number">$SCORE</span></div>
+    <div>
+      <div style="font-size:1.2rem;font-weight:700;margin-bottom:1rem;">Score de conformité CIS</div>
+      <div class="score-details">
+        <div class="score-stat"><div class="num pass-num">$PASS</div><div class="lbl">PASS</div></div>
+        <div class="score-stat"><div class="num fail-num">$FAIL</div><div class="lbl">FAIL</div></div>
+        <div class="score-stat"><div class="num warn-num">$WARN</div><div class="lbl">WARN</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="filter-bar">
+    <button class="filter-btn f-all active"  onclick="filter('all')">Tous ($TOTAL)</button>
+    <button class="filter-btn f-pass"         onclick="filter('PASS')">✔ PASS ($PASS)</button>
+    <button class="filter-btn f-fail"         onclick="filter('FAIL')">✘ FAIL ($FAIL)</button>
+    <button class="filter-btn f-warn"         onclick="filter('WARN')">⚠ WARN ($WARN)</button>
+  </div>
+
+  <table id="results-table">
+    <thead>
+      <tr><th>ID</th><th>Catégorie</th><th>Contrôle</th><th>Statut</th><th>Recommandation</th></tr>
+    </thead>
+    <tbody>
+HTML
+
+  for entry in "${RESULTS[@]}"; do
+    IFS='|' read -r id category desc status details <<< "$entry"
+    cat <<ROW
+      <tr data-status="$status">
+        <td><code>$id</code></td>
+        <td><span class="cat">$category</span></td>
+        <td>$desc</td>
+        <td><span class="badge badge-$status">$status</span></td>
+        <td><span class="reco">$details</span></td>
+      </tr>
+ROW
+  done
+
+  cat <<HTML
+    </tbody>
+  </table>
+
+  <footer>
+    hardening-audit.sh — Basé sur le <a href="https://www.cisecurity.org/benchmark/ubuntu_linux" style="color:#60a5fa">CIS Linux Benchmark</a> et <a href="https://static.open-scap.org/openscap-1.3/oscap_user_manual.html" style="color:#60a5fa">Open-Scap</a>
+  </footer>
+
+  <script>
+    function filter(status) {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      const map = { all: 'f-all', PASS: 'f-pass', FAIL: 'f-fail', WARN: 'f-warn' };
+      document.querySelector('.' + map[status]).classList.add('active');
+      document.querySelectorAll('#results-table tbody tr').forEach(row => {
+        row.style.display = (status === 'all' || row.dataset.status === status) ? '' : 'none';
+      });
+    }
+  </script>
+</body>
+</html>
+HTML
+}
+
 # ── Écriture du rapport ────────────────────────────────────
 echo -e "\n${BOLD}Génération du rapport ${FORMAT^^}...${NC}"
 
 if [ "$FORMAT" = "json" ]; then
   generate_json > "$OUTPUT"
+else
+  generate_html > "$OUTPUT"
 fi
 
 echo -e "${GREEN}${BOLD}✔ Rapport généré : $OUTPUT${NC}\n"
