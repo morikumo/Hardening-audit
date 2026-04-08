@@ -16,9 +16,12 @@ chmod +x hardening-audit.sh
 
 # Rapport JSON
 ./hardening-audit.sh --format json --output rapport.json
+
+# Rapport HTML
+./hardening-audit.sh --format html --output rapport.html
 ```
 
-> Le rapport HTML est en cours d'intégration et sera disponible prochainement.
+> Vous pouvez maintenant choisir entre l'un ou l'autre
 
 ---
 
@@ -28,6 +31,7 @@ chmod +x hardening-audit.sh
 |---|---|---|
 | 1 | **Mises à jour système** | apt, unattended-upgrades, etc... |
 | 2 | **Système de fichiers** | /tmp nodev/nosuid/noexec, partitions séparées, etc... |
+| 3 | **Permissions fichiers** | /etc/passwd, /etc/shadow, /etc/sudoers, sshd_config |
 
 ---
 
