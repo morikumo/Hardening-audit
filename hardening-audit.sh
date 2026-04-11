@@ -259,6 +259,149 @@ check "3.7" "Permissions /etc/ssh/sshd_config : 600" "Permissions" \
   "[ \$(stat -c %a /etc/ssh/sshd_config 2>/dev/null) = '600' ]" \
   "Corriger : chmod 600 /etc/ssh/sshd_config"
 
+check "3.8" "Propriétaire /etc/sudoers : root" "Permissions" \
+  "[ \$(stat -c %U /etc/sudoers) = 'root' ]" \
+  "Corriger : chown root:root /etc/sudoers"
+
+check "3.9" "Permissions /etc/group : 644" "Permissions" \
+  "[ \$(stat -c %a /etc/group) = '644' ]" \
+  "Corriger : chmod 644 /etc/group"
+
+check "3.10" "Propriétaire /etc/group : root" "Permissions" \
+  "[ \$(stat -c %U /etc/group) = 'root' ]" \
+  "Corriger : chown root:root /etc/group"
+
+check "3.11" "Permissions /etc/gshadow : 640 ou 000" "Permissions" \
+  "stat -c %a /etc/gshadow 2>/dev/null | grep -qE '^(640|000|600)$'" \
+  "Corriger : chmod 640 /etc/gshadow"
+
+check "3.12" "Propriétaire /etc/gshadow : root" "Permissions" \
+  "[ \$(stat -c %U /etc/gshadow 2>/dev/null) = 'root' ]" \
+  "Corriger : chown root:root /etc/gshadow"
+
+check "3.13" "Permissions /etc/passwd- (backup) : 644" "Permissions" \
+  "[ ! -f /etc/passwd- ] || [ \$(stat -c %a /etc/passwd-) = '644' ]" \
+  "Corriger : chmod 644 /etc/passwd-"
+
+check "3.14" "Permissions /etc/shadow- (backup) : 640" "Permissions" \
+  "[ ! -f /etc/shadow- ] || stat -c %a /etc/shadow- | grep -qE '^(640|600)$'" \
+  "Corriger : chmod 640 /etc/shadow-"
+
+check "3.15" "Permissions /boot/grub/grub.cfg : 400" "Permissions" \
+  "[ ! -f /boot/grub/grub.cfg ] || [ \$(stat -c %a /boot/grub/grub.cfg) = '400' ]" \
+  "Corriger : chmod 400 /boot/grub/grub.cfg"
+
+check "3.16" "Propriétaire /boot/grub/grub.cfg : root" "Permissions" \
+  "[ ! -f /boot/grub/grub.cfg ] || [ \$(stat -c %U /boot/grub/grub.cfg) = 'root' ]" \
+  "Corriger : chown root:root /boot/grub/grub.cfg"
+
+check "3.17" "Permissions /etc/cron.d : 700" "Permissions" \
+  "[ ! -d /etc/cron.d ] || [ \$(stat -c %a /etc/cron.d) = '700' ]" \
+  "Corriger : chmod 700 /etc/cron.d"
+
+check "3.18" "Permissions /etc/cron.daily : 700" "Permissions" \
+  "[ ! -d /etc/cron.daily ] || [ \$(stat -c %a /etc/cron.daily) = '700' ]" \
+  "Corriger : chmod 700 /etc/cron.daily"
+
+check "3.19" "Permissions /etc/cron.weekly : 700" "Permissions" \
+  "[ ! -d /etc/cron.weekly ] || [ \$(stat -c %a /etc/cron.weekly) = '700' ]" \
+  "Corriger : chmod 700 /etc/cron.weekly"
+
+check "3.20" "Permissions /etc/cron.monthly : 700" "Permissions" \
+  "[ ! -d /etc/cron.monthly ] || [ \$(stat -c %a /etc/cron.monthly) = '700' ]" \
+  "Corriger : chmod 700 /etc/cron.monthly"
+
+check_warn "3.21" "Permissions /etc/at.allow ou at.deny configurés" "Permissions" \
+  "[ -f /etc/at.allow ] || [ -f /etc/at.deny ]" \
+  "Créer /etc/at.allow avec la liste des utilisateurs autorisés"
+
+check_warn "3.22" "Permissions /etc/cron.allow ou cron.deny configurés" "Permissions" \
+  "[ -f /etc/cron.allow ] || [ -f /etc/cron.deny ]" \
+  "Créer /etc/cron.allow avec la liste des utilisateurs autorisés"
+
+check "3.23" "Aucun fichier .rhosts dans les home utilisateurs" "Permissions" \
+  "[ \$(find /home -name '.rhosts' 2>/dev/null | wc -l) -eq 0 ]" \
+  "Supprimer tous les fichiers .rhosts : find /home -name '.rhosts' -delete"
+
+check "3.24" "Aucun fichier .netrc dans les home utilisateurs" "Permissions" \
+  "[ \$(find /home -name '.netrc' 2>/dev/null | wc -l) -eq 0 ]" \
+  "Supprimer tous les fichiers .netrc : find /home -name '.netrc' -delete"
+
+# ── 4. SSH ─────────────────────────────────────────────────
+echo -e "\n${BOLD}[4] Configuration SSH${NC}"
+
+check "4.1" "SSH — Connexion root désactivée" "SSH" \
+  "grep -qE '^PermitRootLogin\s+(no|prohibit-password)' /etc/ssh/sshd_config 2>/dev/null" \
+  "Ajouter dans /etc/ssh/sshd_config : PermitRootLogin no"
+
+check "4.2" "SSH — Authentification par mot de passe désactivée" "SSH" \
+  "grep -qE '^PasswordAuthentication\s+no' /etc/ssh/sshd_config 2>/dev/null" \
+  "Ajouter dans /etc/ssh/sshd_config : PasswordAuthentication no"
+
+check "4.3" "SSH — Protocole 2 uniquement" "SSH" \
+  "! grep -qE '^Protocol\s+1' /etc/ssh/sshd_config 2>/dev/null" \
+  "Supprimer 'Protocol 1' de /etc/ssh/sshd_config"
+
+check "4.4" "SSH — Timeout d'inactivité configuré" "SSH" \
+  "grep -qE '^ClientAliveInterval\s+[0-9]+' /etc/ssh/sshd_config 2>/dev/null" \
+  "Ajouter : ClientAliveInterval 300"
+
+check "4.5" "SSH — Nombre max de tentatives limité" "SSH" \
+  "grep -qE '^MaxAuthTries\s+[1-4]$' /etc/ssh/sshd_config 2>/dev/null" \
+  "Ajouter : MaxAuthTries 3"
+
+check "4.6" "SSH — Transfert X11 désactivé" "SSH" \
+  "grep -qE '^X11Forwarding\s+no' /etc/ssh/sshd_config 2>/dev/null" \
+  "Ajouter : X11Forwarding no"
+
+check_warn "4.7" "SSH — Port non standard" "SSH" \
+  "! grep -qE '^Port\s+22$' /etc/ssh/sshd_config 2>/dev/null" \
+  "Changer le port SSH par défaut (22) vers un port non standard"
+
+check "4.8" "SSH — AllowTcpForwarding désactivé" "SSH" \
+  "grep -qE '^AllowTcpForwarding\s+no' /etc/ssh/sshd_config 2>/dev/null" \
+  "Ajouter dans /etc/ssh/sshd_config : AllowTcpForwarding no"
+
+check "4.9" "SSH — Banner configurée" "SSH" \
+  "grep -qE '^Banner\s+' /etc/ssh/sshd_config 2>/dev/null" \
+  "Ajouter : Banner /etc/issue.net"
+
+check "4.10" "SSH — LoginGraceTime limité (≤ 60s)" "SSH" \
+  "grep -qE '^LoginGraceTime\s+([1-9]|[1-5][0-9]|60)$' /etc/ssh/sshd_config 2>/dev/null" \
+  "Ajouter : LoginGraceTime 60"
+
+check "4.11" "SSH — UsePAM activé" "SSH" \
+  "grep -qE '^UsePAM\s+yes' /etc/ssh/sshd_config 2>/dev/null" \
+  "Ajouter : UsePAM yes"
+
+check "4.12" "SSH — IgnoreRhosts activé" "SSH" \
+  "grep -qE '^IgnoreRhosts\s+yes' /etc/ssh/sshd_config 2>/dev/null" \
+  "Ajouter : IgnoreRhosts yes"
+
+check "4.13" "SSH — HostbasedAuthentication désactivé" "SSH" \
+  "grep -qE '^HostbasedAuthentication\s+no' /etc/ssh/sshd_config 2>/dev/null" \
+  "Ajouter : HostbasedAuthentication no"
+
+check "4.14" "SSH — PermitEmptyPasswords désactivé" "SSH" \
+  "grep -qE '^PermitEmptyPasswords\s+no' /etc/ssh/sshd_config 2>/dev/null" \
+  "Ajouter : PermitEmptyPasswords no"
+
+check "4.15" "SSH — Algorithmes de chiffrement forts uniquement" "SSH" \
+  "grep -qE '^Ciphers\s+' /etc/ssh/sshd_config 2>/dev/null" \
+  "Ajouter : Ciphers aes256-gcm@openssh.com,chacha20-poly1305@openssh.com,aes128-gcm@openssh.com"
+
+check "4.16" "SSH — Algorithmes MAC forts uniquement" "SSH" \
+  "grep -qE '^MACs\s+' /etc/ssh/sshd_config 2>/dev/null" \
+  "Ajouter : MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com"
+
+check_warn "4.17" "SSH — Accès restreint par AllowUsers ou AllowGroups" "SSH" \
+  "grep -qE '^(AllowUsers|AllowGroups)\s+' /etc/ssh/sshd_config 2>/dev/null" \
+  "Ajouter : AllowUsers ton_utilisateur (ou AllowGroups ssh-users)"
+
+check_warn "4.18" "SSH — Port non standard (pas 22)" "SSH" \
+  "! grep -qE '^Port\s+22$' /etc/ssh/sshd_config 2>/dev/null" \
+  "Changer le port par défaut dans /etc/ssh/sshd_config : Port 2222"
+
 # ══════════════════════════════════════════════════════════
 #  CALCUL DU SCORE
 # ══════════════════════════════════════════════════════════
