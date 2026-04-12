@@ -402,6 +402,128 @@ check_warn "4.18" "SSH — Port non standard (pas 22)" "SSH" \
   "! grep -qE '^Port\s+22$' /etc/ssh/sshd_config 2>/dev/null" \
   "Changer le port par défaut dans /etc/ssh/sshd_config : Port 2222"
 
+# ── 5. Firewall ────────────────────────────────────────────
+echo -e "\n${BOLD}[5] Firewall${NC}"
+
+check "5.1" "ufw est installé" "Firewall" \
+  "command -v ufw" \
+  "Installer : apt-get install ufw"
+
+check "5.2" "ufw est actif" "Firewall" \
+  "ufw status 2>/dev/null | grep -q 'Status: active'" \
+  "Activer : ufw enable"
+
+check_warn "5.3" "iptables est disponible" "Firewall" \
+  "command -v iptables" \
+  "Installer : apt-get install iptables"
+
+# ── 6. Services ────────────────────────────────────────────
+echo -e "\n${BOLD}[6] Services${NC}"
+
+check "6.1" "Telnet non installé" "Services" \
+  "! command -v telnet || ! systemctl is-enabled telnet 2>/dev/null | grep -q enabled" \
+  "Désinstaller telnet : apt-get remove telnet"
+
+check "6.2" "FTP non actif" "Services" \
+  "! systemctl is-active vsftpd 2>/dev/null | grep -q '^active'" \
+  "Désactiver FTP : systemctl disable vsftpd"
+
+check "6.3" "Rsh non installé" "Services" \
+  "! command -v rsh" \
+  "Désinstaller rsh : apt-get remove rsh-client"
+
+check_warn "6.4" "NFS non actif" "Services" \
+  "! systemctl is-active nfs-server 2>/dev/null | grep -q '^active'" \
+  "Désactiver NFS si inutilisé : systemctl disable nfs-server"
+
+check_warn "6.5" "Samba non actif" "Services" \
+  "! systemctl is-active smbd 2>/dev/null | grep -q '^active'" \
+  "Désactiver Samba si inutilisé : systemctl disable smbd"
+
+# ── 7. Politique de mots de passe ─────────────────────────
+echo -e "\n${BOLD}[7] Politique de mots de passe${NC}"
+
+check "7.1" "libpam-pwquality est installé" "Passwords" \
+  "dpkg -l libpam-pwquality 2>/dev/null | grep -q '^ii'" \
+  "Installer : apt-get install libpam-pwquality"
+
+check "7.2" "Longueur minimale de mot de passe configurée" "Passwords" \
+  "grep -qE 'minlen\s*=\s*([89]|[1-9][0-9])' /etc/security/pwquality.conf 2>/dev/null" \
+  "Configurer dans /etc/security/pwquality.conf : minlen = 12"
+
+check "7.3" "Expiration des mots de passe configurée (PASS_MAX_DAYS)" "Passwords" \
+  "grep -qE '^PASS_MAX_DAYS\s+([1-9][0-9]|[1-9])' /etc/login.defs 2>/dev/null" \
+  "Configurer dans /etc/login.defs : PASS_MAX_DAYS 90"
+
+check "7.4" "Âge minimum des mots de passe (PASS_MIN_DAYS)" "Passwords" \
+  "grep -qE '^PASS_MIN_DAYS\s+[1-9]' /etc/login.defs 2>/dev/null" \
+  "Configurer dans /etc/login.defs : PASS_MIN_DAYS 7"
+
+check "7.5" "Avertissement d'expiration (PASS_WARN_AGE)" "Passwords" \
+  "grep -qE '^PASS_WARN_AGE\s+[7-9]|[1-9][0-9]' /etc/login.defs 2>/dev/null" \
+  "Configurer dans /etc/login.defs : PASS_WARN_AGE 14"
+
+# ── 8. Logging et audit ────────────────────────────────────
+echo -e "\n${BOLD}[8] Logging et audit${NC}"
+
+check "8.1" "rsyslog est installé et actif" "Logging" \
+  "systemctl is-active rsyslog 2>/dev/null | grep -q '^active'" \
+  "Installer et activer : apt-get install rsyslog && systemctl enable rsyslog"
+
+check "8.2" "auditd est installé" "Logging" \
+  "command -v auditd || dpkg -l auditd 2>/dev/null | grep -q '^ii'" \
+  "Installer : apt-get install auditd"
+
+check_warn "8.3" "auditd est actif" "Logging" \
+  "systemctl is-active auditd 2>/dev/null | grep -q '^active'" \
+  "Activer : systemctl enable auditd && systemctl start auditd"
+
+check "8.4" "Logs /var/log/auth.log présents" "Logging" \
+  "[ -f /var/log/auth.log ]" \
+  "Vérifier la configuration de rsyslog"
+
+# ── 9. Réseau ──────────────────────────────────────────────
+echo -e "\n${BOLD}[9] Configuration réseau${NC}"
+
+check "9.1" "Redirection IP désactivée (IPv4)" "Network" \
+  "[ \$(sysctl -n net.ipv4.ip_forward 2>/dev/null) = '0' ]" \
+  "Configurer dans /etc/sysctl.conf : net.ipv4.ip_forward = 0"
+
+check "9.2" "Protection SYN flood activée" "Network" \
+  "[ \$(sysctl -n net.ipv4.tcp_syncookies 2>/dev/null) = '1' ]" \
+  "Configurer : net.ipv4.tcp_syncookies = 1"
+
+check "9.3" "ICMP redirects désactivés" "Network" \
+  "[ \$(sysctl -n net.ipv4.conf.all.accept_redirects 2>/dev/null) = '0' ]" \
+  "Configurer : net.ipv4.conf.all.accept_redirects = 0"
+
+check "9.4" "Source routing désactivé" "Network" \
+  "[ \$(sysctl -n net.ipv4.conf.all.accept_source_route 2>/dev/null) = '0' ]" \
+  "Configurer : net.ipv4.conf.all.accept_source_route = 0"
+
+check_warn "9.5" "IPv6 désactivé (si non utilisé)" "Network" \
+  "[ \$(sysctl -n net.ipv6.conf.all.disable_ipv6 2>/dev/null) = '1' ]" \
+  "Si IPv6 inutilisé : net.ipv6.conf.all.disable_ipv6 = 1"
+
+# ── 10. Comptes utilisateurs ───────────────────────────────
+echo -e "\n${BOLD}[10] Comptes utilisateurs${NC}"
+
+check "10.1" "Aucun compte sans mot de passe" "Users" \
+  "[ -z \"\$(awk -F: '(\$2 == \"\" ) {print \$1}' /etc/shadow 2>/dev/null)\" ]" \
+  "Définir un mot de passe pour tous les comptes"
+
+check "10.2" "Aucun UID 0 hors root" "Users" \
+  "[ \$(awk -F: '(\$3 == 0) {print \$1}' /etc/passwd | grep -v '^root$' | wc -l) -eq 0 ]" \
+  "Supprimer ou corriger les comptes avec UID 0 autres que root"
+
+check_warn "10.3" "sudo est installé" "Users" \
+  "command -v sudo" \
+  "Installer : apt-get install sudo"
+
+check "10.4" "Le répertoire root a les bonnes permissions (700)" "Users" \
+  "[ \$(stat -c %a /root) = '700' ]" \
+  "Corriger : chmod 700 /root"
+
 # ══════════════════════════════════════════════════════════
 #  CALCUL DU SCORE
 # ══════════════════════════════════════════════════════════
