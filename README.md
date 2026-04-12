@@ -32,6 +32,13 @@ chmod +x hardening-audit.sh
 | 1 | **Mises à jour système** | apt, unattended-upgrades, etc... |
 | 2 | **Système de fichiers** | /tmp nodev/nosuid/noexec, partitions séparées, etc... |
 | 3 | **Permissions fichiers** | /etc/passwd, /etc/shadow, /etc/sudoers, sshd_config |
+| 4 | **Configuration SSH** | Root login, password auth, timeout, MaxAuthTries, X11 |
+| 5 | **Firewall** | ufw installé et actif, iptables |
+| 6 | **Services** | Telnet, FTP, RSH, NFS, Samba désactivés |
+| 7 | **Mots de passe** | pwquality, longueur minimale, expiration, PASS_MIN_DAYS |
+| 8 | **Logging & Audit** | rsyslog, auditd, auth.log |
+| 9 | **Réseau** | IP forward, SYN cookies, ICMP redirects, source routing |
+| 10 | **Comptes utilisateurs** | Comptes sans mdp, UID 0, permissions /root |
 
 ---
 
