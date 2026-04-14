@@ -1,0 +1,29 @@
+---
+- name: Audit CIS Benchmark
+  hosts: targets
+  become: true
+
+  tasks:
+
+    - name: Créer le dossier d'audit sur la cible
+      file:
+        path: /opt/hardening-audit
+        state: directory
+        mode: '0755'
+
+    - name: Copier le script hardening-audit.sh
+      copy:
+        src: ../hardening-audit.sh
+        dest: /opt/hardening-audit/hardening-audit.sh
+        mode: '0755'
+
+    - name: Lancer l'audit
+      shell: /opt/hardening-audit/hardening-audit.sh --format json --output /opt/hardening-audit/rapport.json
+      args:
+        executable: /bin/bash
+
+    - name: Récupérer le rapport sur la machine locale
+      fetch:
+        src: /opt/hardening-audit/rapport.json
+        dest: ./rapports/{{ inventory_hostname }}_audit.json
+        flat: true
