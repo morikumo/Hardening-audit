@@ -52,6 +52,27 @@ chmod +x hardening-audit.sh
 
 ---
 
+## Methode avec Ansible pour audit sur parc de machine
+
+Control node
+├── inventory.ini
+├── audit.yml
+└── hardening-audit.sh
+        │
+        │  SSH
+        ▼
+   ┌────────────┐     ┌────────────┐
+   │ target-01  │     │ target-02  │
+   │ 172.17.0.2 │     │ 172.17.0.3 │
+   └─────┬──────┘     └─────┬──────┘
+         │                  │
+         └────────┬─────────┘
+                  │  fetch
+                  ▼
+           rapports/
+           ├── target-01_audit.json
+           └── target-02_audit.json
+
 ## 📚 Référence
 
 Basé sur le [CIS Ubuntu Linux Benchmark](https://www.cisecurity.org/benchmark/ubuntu_linux), la référence mondiale pour le durcissement des serveurs Linux.
